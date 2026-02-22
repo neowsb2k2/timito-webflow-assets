@@ -722,18 +722,28 @@ if (!prefersReducedMotion) {
   const manifestoText = document.getElementById('manifestoText');
   const manifestoHeading = document.getElementById('manifestoHeading');
   if (manifestoPin && manifestoText) {
-    // Build letter spans from data attribute
+    // Build letter spans from data attribute (Word-Wrapped Fix)
     const segments = JSON.parse(manifestoText.dataset.lines);
     manifestoText.innerHTML = '';
     segments.forEach(seg => {
-      seg.text.split('').forEach(char => {
-        if (char === ' ') {
+      // Zerlegt den Text in Wörter und erhält die Leerzeichen
+      const words = seg.text.split(/( )/); 
+      words.forEach(word => {
+        if (word === ' ') {
           manifestoText.appendChild(document.createTextNode(' '));
-        } else {
-          const span = document.createElement('span');
-          span.className = 'ml' + (seg.color ? ' ml--' + seg.color : '');
-          span.textContent = char;
-          manifestoText.appendChild(span);
+        } else if (word.length > 0) {
+          // Packt das Wort in einen Wrapper, der nicht umbrechen darf
+          const wordSpan = document.createElement('span');
+          wordSpan.style.whiteSpace = 'nowrap'; 
+          
+          word.split('').forEach(char => {
+            const span = document.createElement('span');
+            span.className = 'ml' + (seg.color ? ' ml--' + seg.color : '');
+            span.textContent = char;
+            wordSpan.appendChild(span);
+          });
+          
+          manifestoText.appendChild(wordSpan);
         }
       });
     });
