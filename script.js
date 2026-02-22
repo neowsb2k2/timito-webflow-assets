@@ -428,6 +428,10 @@ if (burger && mobileMenu) {
     isOpen ? closeMobileMenu() : openMobileMenu();
   });
 
+  // Close button inside mobile menu
+  var mobileClose = document.getElementById('mobileMenuClose');
+  if (mobileClose) mobileClose.addEventListener('click', closeMobileMenu);
+
   // Close on link click
   mobileMenu.querySelectorAll('a').forEach(link => {
     link.addEventListener('click', closeMobileMenu);
