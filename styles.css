@@ -143,7 +143,7 @@ h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spac
 #site-header.scrolled .nav { }
 .nav__inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; max-width: var(--container-max); margin: 0 auto; border: 1px solid var(--glass-border); border-radius: 999px; padding: .5rem .5rem .5rem 1.5rem; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur) }
 .nav__logo img { height: 30px; width: auto }
-.nav__links { display: flex; gap: .25rem; list-style: none }
+.nav__links { display: flex; align-items: center; gap: .25rem; list-style: none; margin-bottom: 0 !important; }
 .nav__link { font-size: .82rem; font-weight: 500; color: var(--color-text-muted); padding: .5rem .75rem; border-radius: var(--radius-sm); transition: color var(--transition-fast), background var(--transition-fast) }
 .nav__link:hover { color: var(--color-text); background: rgba(255,255,255,.04) }
 .nav__cta { margin-left: 0; border-radius: 999px; padding: .6rem 1.4rem }
