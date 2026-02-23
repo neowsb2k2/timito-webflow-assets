@@ -4321,3 +4321,10 @@ header#site-header {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
+
+/* =============================================
+   GSAP OVERFLOW FIX — Mobile horizontal clip
+   Verhindert viewport-shift bei x-Animationen
+   ============================================= */
+.svc-reference   { overflow: clip; }
+.timeline-section { overflow: clip; }
