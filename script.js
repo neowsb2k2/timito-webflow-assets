@@ -2273,3 +2273,125 @@ window.addEventListener('load', function () {
 
   categories.forEach(function(cat) { observer.observe(cat); });
 })();
+
+/* ============================================
+   BLOG — Scroll Animations + Filter
+   ============================================ */
+(function initBlog() {
+  /* ── Blog Card Reveal ── */
+  var blogCards = document.querySelectorAll('.blog-card');
+  if (!blogCards.length) return;
+
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (typeof gsap !== 'undefined' && !reducedMotion) {
+    blogCards.forEach(function(card, i) {
+      gsap.from(card, {
+        scrollTrigger: {
+          trigger: card,
+          start: 'top 92%',
+          toggleActions: 'play none none none'
+        },
+        y: 40,
+        opacity: 0,
+        duration: 0.6,
+        delay: (i % 3) * 0.1,
+        ease: 'power3.out'
+      });
+    });
+
+    /* Blog Hero */
+    var blogHero = document.querySelector('.blog-hero');
+    if (blogHero) {
+      gsap.from('.blog-hero__eyebrow', {
+        y: 20, opacity: 0, duration: 0.5, ease: 'power3.out', delay: 0.1
+      });
+      gsap.from('.blog-hero__title', {
+        y: 30, opacity: 0, duration: 0.7, ease: 'power3.out', delay: 0.2
+      });
+      gsap.from('.blog-hero__sub', {
+        y: 20, opacity: 0, duration: 0.6, ease: 'power3.out', delay: 0.35
+      });
+      gsap.from('.blog-filter__pill', {
+        y: 15, opacity: 0, duration: 0.4, stagger: 0.06, ease: 'power3.out', delay: 0.45
+      });
+    }
+
+    /* Post Hero */
+    var postHero = document.querySelector('.post-hero');
+    if (postHero) {
+      gsap.from('.post-hero__eyebrow', {
+        y: 15, opacity: 0, duration: 0.5, ease: 'power3.out', delay: 0.1
+      });
+      gsap.from('.post-hero__title', {
+        y: 30, opacity: 0, duration: 0.7, ease: 'power3.out', delay: 0.2
+      });
+      gsap.from('.post-hero__excerpt', {
+        y: 20, opacity: 0, duration: 0.6, ease: 'power3.out', delay: 0.3
+      });
+      gsap.from('.post-hero__meta', {
+        y: 15, opacity: 0, duration: 0.5, ease: 'power3.out', delay: 0.4
+      });
+      gsap.from('.post-hero__cover', {
+        y: 25, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.5
+      });
+    }
+  }
+
+  /* ── Filter Pills — active state toggle ── */
+  var pills = document.querySelectorAll('.blog-filter__pill');
+  pills.forEach(function(pill) {
+    pill.addEventListener('click', function() {
+      pills.forEach(function(p) { p.classList.remove('is-active'); });
+      pill.classList.add('is-active');
+    });
+  });
+})();
+
+/* ============================================
+   BLOG POST — Sidebar TOC + Reading Time
+   ============================================ */
+(function initPostSidebar() {
+  var body = document.querySelector('.post-body');
+  var tocList = document.getElementById('tocList');
+  var readingEl = document.getElementById('readingTime');
+  var heroReadingEl = document.getElementById('heroReadingTime');
+  if (!body || !tocList) return;
+
+  // 1. Reading time (200 WPM average)
+  var words = (body.textContent || '').trim().split(/\s+/).length;
+  var minutes = Math.max(1, Math.round(words / 200));
+  var readingText = minutes + ' Min Lesezeit';
+  if (readingEl) readingEl.textContent = readingText;
+  if (heroReadingEl) heroReadingEl.textContent = readingText;
+
+  // 2. Build TOC from h2/h3
+  var headings = body.querySelectorAll('h2, h3');
+  if (!headings.length) return;
+
+  headings.forEach(function(h, i) {
+    if (!h.id) h.id = 'section-' + i;
+    var li = document.createElement('li');
+    var a = document.createElement('a');
+    a.href = '#' + h.id;
+    a.textContent = h.textContent;
+    a.className = 'post-toc__link' +
+      (h.tagName === 'H3' ? ' post-toc__link--h3' : '');
+    li.appendChild(a);
+    tocList.appendChild(li);
+  });
+
+  // 3. Active heading via IntersectionObserver
+  var links = tocList.querySelectorAll('.post-toc__link');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        links.forEach(function(l) { l.classList.remove('post-toc__link--active'); });
+        var active = tocList.querySelector('a[href="#' + entry.target.id + '"]');
+        if (active) active.classList.add('post-toc__link--active');
+      }
+    });
+  }, { rootMargin: '-80px 0px -60% 0px', threshold: 0 });
+
+  headings.forEach(function(h) { observer.observe(h); });
+})();
