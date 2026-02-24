@@ -146,14 +146,16 @@ h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spac
 .nav__logo { display: flex; align-items: center; }
 .nav__logo img { height: 30px; width: auto; display: block; }
 
-/* FIX: align-items: center zwingt alle Listenelemente auf die exakt gleiche Höhe */
 .nav__links { display: flex; align-items: center; gap: .25rem; list-style: none; margin: 0; padding: 0; }
 
-/* FIX: line-height: 1 und inline-flex zentrieren den Text im Button mathematisch perfekt */
-.nav__link { display: inline-flex; align-items: center; line-height: 1; font-size: .82rem; font-weight: 500; color: var(--color-text-muted); padding: .5rem .75rem; border-radius: var(--radius-sm); transition: color var(--transition-fast), background var(--transition-fast); text-decoration: none; }
+/* FIX: Perfekte vertikale Zentrierung für alle Links */
+.nav__link { display: inline-flex; align-items: center; justify-content: center; font-size: .82rem; font-weight: 500; color: var(--color-text-muted); padding: .5rem .75rem; border-radius: var(--radius-sm); transition: color var(--transition-fast), background var(--transition-fast); text-decoration: none; margin: 0; }
 
-/* FIX: Nimmt Webflows w--current (aktive Seite) Klasse und macht sie elegant */
-.nav__link:hover, .nav__link.w--current { color: var(--color-text); background: rgba(255,255,255,.06) }
+/* Hover-Effekt: sanfter Kasten */
+.nav__link:hover { color: var(--color-text); background: rgba(255,255,255,.06); }
+
+/* FIX: Webflow Current-State. KEIN Kasten mehr, sondern nur leuchtende Schriftfarbe! Das !important zwingt Webflow dazu. */
+.nav__link.w--current { color: var(--color-accent) !important; background: transparent !important; }
 
 .nav__cta { margin-left: 0; border-radius: 999px; padding: .6rem 1.4rem }
 
@@ -168,8 +170,9 @@ h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spac
    =========================== */
 .nav__dropdown { position: relative; display: flex; align-items: center; }
 
-/* FIX: Auch der Dropdown-Button bekommt line-height: 1 für perfekte Symmetrie */
-.nav__link--dd { display: inline-flex; align-items: center; gap: .35rem; background: none; border: none; cursor: pointer; font-family: inherit; line-height: 1; }
+/* FIX: Dropdown-Button bekommt EXAKT dasselbe Styling wie normale Links, damit alles auf einer geraden Linie sitzt */
+.nav__link--dd { display: inline-flex; align-items: center; justify-content: center; gap: .35rem; background: none; border: none; cursor: pointer; font-family: inherit; font-size: .82rem; font-weight: 500; color: var(--color-text-muted); padding: .5rem .75rem; border-radius: var(--radius-sm); transition: color var(--transition-fast), background var(--transition-fast); margin: 0; }
+.nav__link--dd:hover { color: var(--color-text); background: rgba(255,255,255,.06); }
 .nav__link--dd svg { transition: transform .25s ease }
 .nav__link--dd[aria-expanded="true"] svg { transform: rotate(180deg) }
 
