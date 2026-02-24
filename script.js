@@ -1162,27 +1162,33 @@ window.addEventListener('load', function () {
     });
 
     // Hero stat tiles (toggleActions for clean stagger)
-    gsap.from('.stat-tile', {
-      scrollTrigger: { trigger: '.svc-hero__stats', start: 'top 85%', toggleActions: 'play none none reverse' },
-      y: 30, opacity: 0, stagger: 0.15, duration: 0.6, ease: 'power3.out'
-    });
+    if (document.querySelector('.svc-hero__stats')) {
+      gsap.from('.stat-tile', {
+        scrollTrigger: { trigger: '.svc-hero__stats', start: 'top 85%', toggleActions: 'play none none reverse' },
+        y: 30, opacity: 0, stagger: 0.15, duration: 0.6, ease: 'power3.out'
+      });
+    }
 
     // Problem grid — cards + solution as one timeline (toggleActions for clean stagger)
-    var problemTl = gsap.timeline({
-      scrollTrigger: { trigger: '.problem-grid', start: 'top 85%', end: 'top 15%', toggleActions: 'play none none reverse' }
-    });
-    problemTl.from('.problem__card', {
-      y: 40, opacity: 0, stagger: 0.2, duration: 0.6, ease: 'power3.out'
-    }, 0);
-    problemTl.from('.solution-col', {
-      y: 30, opacity: 0, duration: 0.6, ease: 'power3.out'
-    }, 0.15);
+    if (document.querySelector('.problem-grid')) {
+      var problemTl = gsap.timeline({
+        scrollTrigger: { trigger: '.problem-grid', start: 'top 85%', end: 'top 15%', toggleActions: 'play none none reverse' }
+      });
+      problemTl.from('.problem__card', {
+        y: 40, opacity: 0, stagger: 0.2, duration: 0.6, ease: 'power3.out'
+      }, 0);
+      problemTl.from('.solution-col', {
+        y: 30, opacity: 0, duration: 0.6, ease: 'power3.out'
+      }, 0.15);
+    }
 
     // Strategist card
-    gsap.from('.strategist__card', {
-      scrollTrigger: Object.assign({ trigger: '.strategist__card' }, scrubDef),
-      y: 40, opacity: 0, duration: 0.8, ease: 'power3.out'
-    });
+    if (document.querySelector('.strategist__card')) {
+      gsap.from('.strategist__card', {
+        scrollTrigger: Object.assign({ trigger: '.strategist__card' }, scrubDef),
+        y: 40, opacity: 0, duration: 0.8, ease: 'power3.out'
+      });
+    }
 
     // Timeline steps
     gsap.utils.toArray('.timeline__step').forEach(function (step, i) {
@@ -1203,20 +1209,24 @@ window.addEventListener('load', function () {
     }
 
     // Investment cards (toggleActions for clean stagger)
-    gsap.from('.package-card', {
-      scrollTrigger: { trigger: '.investment__grid', start: 'top 85%', toggleActions: 'play none none reverse' },
-      y: 30, opacity: 0, stagger: 0.15, duration: 0.6, ease: 'power3.out'
-    });
+    if (document.querySelector('.investment__grid')) {
+      gsap.from('.package-card', {
+        scrollTrigger: { trigger: '.investment__grid', start: 'top 85%', toggleActions: 'play none none reverse' },
+        y: 30, opacity: 0, stagger: 0.15, duration: 0.6, ease: 'power3.out'
+      });
+    }
 
     // CTA section
-    gsap.from('.svc-cta__content', {
-      scrollTrigger: Object.assign({ trigger: '.svc-cta' }, scrubDef),
-      y: 30, opacity: 0, duration: 0.7, ease: 'power3.out'
-    });
-    gsap.from('.svc-funnel', {
-      scrollTrigger: Object.assign({ trigger: '.svc-cta', start: 'top 80%', end: 'top 15%', scrub: 1 }),
-      y: 40, opacity: 0, duration: 0.7, ease: 'power3.out'
-    });
+    if (document.querySelector('.svc-cta')) {
+      gsap.from('.svc-cta__content', {
+        scrollTrigger: Object.assign({ trigger: '.svc-cta' }, scrubDef),
+        y: 30, opacity: 0, duration: 0.7, ease: 'power3.out'
+      });
+      gsap.from('.svc-funnel', {
+        scrollTrigger: Object.assign({ trigger: '.svc-cta', start: 'top 80%', end: 'top 15%', scrub: 1 }),
+        y: 40, opacity: 0, duration: 0.7, ease: 'power3.out'
+      });
+    }
   }
 
   /* FAQ SMOOTH ACCORDION */
