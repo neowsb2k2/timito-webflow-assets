@@ -4669,6 +4669,9 @@ header#site-header {
   object-fit: cover;
   border: 1px solid rgba(0,212,255,0.25);
 }
+.post-hero__meta-sep {
+  opacity: 0.4;
+}
 .post-hero__cover {
   width: 100%;
   aspect-ratio: 21/9;
