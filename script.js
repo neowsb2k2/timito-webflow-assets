@@ -1011,7 +1011,7 @@ if (contactForm) {
       });
 
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1398,7 +1398,7 @@ window.addEventListener('load', function () {
           body: new FormData(svcForm)
         });
         if (res.ok) {
-          window.location.href = 'thankyou.html';
+          window.location.href = '/danke';
         } else {
           throw new Error('Server error');
         }
@@ -1533,7 +1533,7 @@ window.addEventListener('load', function () {
         body: new FormData(socialForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1606,7 +1606,7 @@ window.addEventListener('load', function () {
         body: new FormData(sstForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1679,7 +1679,7 @@ window.addEventListener('load', function () {
         body: new FormData(webForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1766,7 +1766,7 @@ window.addEventListener('load', function () {
         body: new FormData(uxForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1853,7 +1853,7 @@ window.addEventListener('load', function () {
         body: new FormData(stratForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -1947,7 +1947,7 @@ window.addEventListener('load', function () {
         body: new FormData(teamForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -2046,7 +2046,7 @@ window.addEventListener('load', function () {
         body: new FormData(koopForm)
       });
       if (res.ok) {
-        window.location.href = 'thankyou.html';
+        window.location.href = '/danke';
       } else {
         throw new Error('Server error');
       }
@@ -2172,12 +2172,7 @@ window.addEventListener('load', function () {
         headers: { 'Accept': 'application/json' }
       });
       if (res.ok) {
-        steps[current].hidden = true;
-        form.querySelector('.funnel__progress')
-            ?.closest('.funnel__progress-wrap')
-            ?.remove?.();
-        if (bar) bar.style.width = '100%';
-        success.hidden = false;
+        window.location.href = '/danke';
       } else {
         throw new Error('Network response not ok');
       }
