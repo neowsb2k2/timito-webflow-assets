@@ -2527,3 +2527,303 @@ window.addEventListener('load', function () {
    SCROLLTRIGGER REFRESH
    ============================================ */
 if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
+
+/* ============================================
+   TRACKING ANALYSE — tracking-analyse.html
+   ============================================ */
+(function initTrackingAnalyseFunnel() {
+  // Nur auf tracking-analyse Seite ausführen
+  if (!document.getElementById('ta-funnel')) return;
+
+  // --- State ---
+  var state = {
+    currentStage: 'intro',
+    currentQuestion: 1,
+    totalQuestions: 7,
+    answers: {},
+    rawScore: 0,
+    maxScore: 115,
+    normalizedScore: 0,
+    estimatedLoss: ''
+  };
+
+  // --- Stage Navigation ---
+  function showStage(id) {
+    document.querySelectorAll('.ta-stage').forEach(function(s) {
+      s.classList.remove('ta-stage--active');
+    });
+    var target = document.getElementById('ta-' + id);
+    if (!target) return;
+    target.classList.add('ta-stage--active');
+    state.currentStage = id;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // GSAP Stage-Einblend-Animation
+    if (typeof gsap !== 'undefined') {
+      var children = target.querySelectorAll('.container > *, .ta-quiz, .ta-results, .ta-form-layout');
+      gsap.fromTo(children,
+        { y: 30, opacity: 0 },
+        { y: 0, opacity: 1, duration: 0.5, stagger: 0.08, ease: 'power3.out' }
+      );
+    }
+
+    if (id === 'results') calculateResults();
+    if (id === 'form') prepareForm();
+  }
+
+  // --- Quiz Navigation ---
+  function showQuestion(num) {
+    document.querySelectorAll('.ta-quiz__question').forEach(function(q) {
+      q.classList.remove('active');
+    });
+    var target = document.querySelector('.ta-quiz__question[data-question="' + num + '"]');
+    if (target) {
+      target.classList.add('active');
+      state.currentQuestion = num;
+      updateProgress();
+    }
+  }
+
+  function updateProgress() {
+    var fill = document.getElementById('ta-progress-fill');
+    var label = document.getElementById('ta-progress-label');
+    var pct = ((state.currentQuestion - 1) / state.totalQuestions) * 100;
+    if (fill) fill.style.width = pct + '%';
+    if (label) label.textContent = 'Frage ' + state.currentQuestion + ' / ' + state.totalQuestions;
+  }
+
+  // --- Score Calculation ---
+  function calculateResults() {
+    state.rawScore = 0;
+    Object.values(state.answers).forEach(function(a) {
+      state.rawScore += (a.score || 0);
+    });
+    state.normalizedScore = Math.round((state.rawScore / state.maxScore) * 100);
+    animateScoreRing(state.normalizedScore);
+    renderVerdict(state.normalizedScore);
+    renderLoss(state.normalizedScore);
+    renderIssues();
+  }
+
+  function scoreColor(score) {
+    if (score < 25) return 'var(--color-pink)';
+    if (score < 45) return 'var(--color-orange)';
+    if (score < 65) return 'var(--color-yellow)';
+    if (score < 85) return 'var(--color-accent)';
+    return 'var(--color-green)';
+  }
+
+  function animateScoreRing(target) {
+    var numEl = document.getElementById('ta-score-num');
+    var ringFill = document.querySelector('#ta-results .ta-score-ring__fill');
+    var color = scoreColor(target);
+
+    // Zahl hochzählen
+    if (typeof gsap !== 'undefined' && numEl) {
+      gsap.fromTo({ val: 0 }, { val: target }, {
+        duration: 1.5, ease: 'power2.out',
+        onUpdate: function() { numEl.textContent = Math.round(this.targets()[0].val); },
+        onComplete: function() { numEl.style.color = color; }
+      });
+    } else if (numEl) {
+      numEl.textContent = target;
+      numEl.style.color = color;
+    }
+
+    // Ring animieren — r=90 → circumference ≈ 565
+    if (ringFill) {
+      var circumference = 2 * Math.PI * 90;
+      var offset = circumference - (target / 100) * circumference;
+      if (typeof gsap !== 'undefined') {
+        ringFill.style.stroke = color;
+        gsap.to(ringFill, { strokeDashoffset: offset, duration: 1.5, ease: 'power2.out' });
+      } else {
+        ringFill.style.stroke = color;
+        ringFill.style.strokeDashoffset = offset;
+      }
+    }
+  }
+
+  function renderVerdict(score) {
+    var el = document.getElementById('ta-verdict');
+    if (!el) return;
+    var data;
+    if (score < 25) data = { title: 'Kritischer Zustand', text: 'Dein Tracking hat massive L\u00fccken. Wahrscheinlich siehst du weniger als die H\u00e4lfte deiner echten Conversions.' };
+    else if (score < 45) data = { title: 'Erheblicher Verbesserungsbedarf', text: 'Ohne Server-Side Tracking und Conversions APIs verlierst du t\u00e4glich messbare Budget-Effizienz.' };
+    else if (score < 65) data = { title: 'Durchschnittliches Setup', text: 'Solide Basis, aber konkrete L\u00fccken kosten dich Daten. Mit gezielten Fixes ist deutlich mehr drin.' };
+    else if (score < 85) data = { title: '\u00dcberdurchschnittliches Setup', text: 'Gut aufgestellt. Feintuning kann noch 10\u201315% mehr Tracking-Genauigkeit rausholen.' };
+    else data = { title: 'Professionelles Setup', text: 'Du geh\u00f6rst zu den wenigen, die Tracking wirklich ernst nehmen. Wir w\u00fcrden trotzdem gern reinschauen.' };
+    el.innerHTML = '<h3 class="ta-verdict__title">' + data.title + '</h3><p class="ta-verdict__text">' + data.text + '</p>';
+  }
+
+  function renderLoss(score) {
+    var el = document.getElementById('ta-loss-value');
+    if (!el) return;
+    var loss;
+    if (score < 25) loss = '55\u201370%';
+    else if (score < 45) loss = '40\u201355%';
+    else if (score < 65) loss = '25\u201340%';
+    else if (score < 85) loss = '10\u201325%';
+    else loss = '5\u201315%';
+    el.textContent = '~' + loss;
+    state.estimatedLoss = loss;
+  }
+
+  function renderIssues() {
+    var list = document.getElementById('ta-issues-list');
+    if (!list) return;
+    var issues = [];
+    var a = state.answers;
+
+    if (a.serverside && (a.serverside.value === 'no' || a.serverside.value === 'dont-know')) {
+      issues.push({ type: 'critical', title: 'Kein Server-Side Tracking', text: 'Ohne GTM Server Container verlierst du 30\u201350% der Conversions durch Browser-Einschr\u00e4nkungen.' });
+    } else if (a.serverside && a.serverside.value === 'yes-partial') {
+      issues.push({ type: 'warning', title: 'Server-Side nur teilweise aktiv', text: 'Guter Anfang, aber unvollst\u00e4ndige Implementierung hinterl\u00e4sst noch L\u00fccken.' });
+    }
+    if (a.capi && (a.capi.value === 'no' || a.capi.value === 'dont-know')) {
+      issues.push({ type: 'critical', title: 'Keine Conversions APIs aktiv', text: 'Meta CAPI, Google Enhanced Conversions und TikTok Events API sind essentiell f\u00fcr genaues Tracking.' });
+    } else if (a.capi && a.capi.value === 'yes-some') {
+      issues.push({ type: 'warning', title: 'Conversions APIs nur teilweise', text: 'Einige Plattformen erhalten keine Server-Events \u2014 Optimierung auf Basis unvollst\u00e4ndiger Daten.' });
+    }
+    if (a.consent && (a.consent.value === 'no-banner' || a.consent.value === 'basic-banner')) {
+      issues.push({ type: 'warning', title: 'Consent Mode v2 nicht aktiv', text: 'Ohne Consent Mode modelliert Google keine Conversions f\u00fcr Nutzer, die ablehnen.' });
+    }
+    if (a.gtm && a.gtm.value === 'no') {
+      issues.push({ type: 'warning', title: 'Kein Tag Manager', text: 'Ohne GTM ist strukturiertes, skalierbares Conversion-Tracking kaum realisierbar.' });
+    }
+    if (a.accuracy && (a.accuracy.value === 'big-gap' || a.accuracy.value === 'dont-compare')) {
+      issues.push({ type: 'critical', title: 'Abgleich fehlt oder zeigt L\u00fccke', text: 'Wer Plattform-Daten nicht mit echten Sales/Leads abgleicht, optimiert auf fehlerhafte Grundlage.' });
+    }
+
+    if (issues.length === 0) {
+      issues.push({ type: 'ok', title: 'Keine kritischen Schwachstellen', text: 'Dein Setup ist solide. Wir schauen trotzdem gern im Detail rein.' });
+    }
+
+    // SVG Icons nach Severity
+    var icons = {
+      critical: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><circle cx="12" cy="16" r="0.5" fill="currentColor"/></svg>',
+      warning: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><circle cx="12" cy="17" r="0.5" fill="currentColor"/></svg>',
+      ok: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    };
+
+    list.innerHTML = issues.map(function(issue) {
+      return '<div class="ta-issue ta-issue--' + issue.type + '">'
+        + '<span class="ta-issue__icon">' + icons[issue.type] + '</span>'
+        + '<div><div class="ta-issue__title">' + issue.title + '</div>'
+        + '<div class="ta-issue__text">' + issue.text + '</div></div></div>';
+    }).join('');
+  }
+
+  function prepareForm() {
+    var scoreEl = document.getElementById('ta-form-score');
+    var hiddenScore = document.getElementById('ta-hidden-score');
+    var hiddenAnswers = document.getElementById('ta-hidden-answers');
+    var hiddenLoss = document.getElementById('ta-hidden-loss');
+    if (scoreEl) {
+      scoreEl.textContent = state.normalizedScore + '/100';
+      scoreEl.style.color = scoreColor(state.normalizedScore);
+    }
+    if (hiddenScore) hiddenScore.value = state.normalizedScore;
+    if (hiddenAnswers) hiddenAnswers.value = JSON.stringify(state.answers);
+    if (hiddenLoss) hiddenLoss.value = state.estimatedLoss;
+  }
+
+  // --- Event Binding ---
+  // Start Button
+  var startBtn = document.getElementById('ta-start');
+  if (startBtn) startBtn.addEventListener('click', function() { showStage('quiz'); });
+
+  // Radio auto-advance
+  document.querySelectorAll('.ta-quiz__question').forEach(function(qEl) {
+    var radios = qEl.querySelectorAll('input[type="radio"]');
+    var qNum = parseInt(qEl.dataset.question);
+
+    radios.forEach(function(radio) {
+      radio.addEventListener('change', function() {
+        state.answers[radio.name] = { value: radio.value, score: parseInt(radio.dataset.score) || 0 };
+        // Auto advance
+        setTimeout(function() {
+          if (qNum < state.totalQuestions) showQuestion(qNum + 1);
+          else showStage('results');
+        }, 350);
+      });
+    });
+
+    // Checkboxes (Q1 Plattformen)
+    var checkboxes = qEl.querySelectorAll('input[type="checkbox"]');
+    if (checkboxes.length) {
+      var nextBtn = qEl.querySelector('.ta-next');
+      checkboxes.forEach(function(cb) {
+        cb.addEventListener('change', function() {
+          var selected = [];
+          checkboxes.forEach(function(c) { if (c.checked) selected.push(c.value); });
+          state.answers[cb.name] = { value: selected, score: 0 };
+          if (nextBtn) nextBtn.disabled = selected.length === 0;
+        });
+      });
+    }
+  });
+
+  // Next buttons
+  document.querySelectorAll('.ta-next').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var next = parseInt(btn.dataset.next);
+      if (next <= state.totalQuestions) showQuestion(next);
+      else showStage('results');
+    });
+  });
+
+  // Show form
+  var showFormBtn = document.getElementById('ta-show-form');
+  if (showFormBtn) showFormBtn.addEventListener('click', function() { showStage('form'); });
+
+  // Back to results
+  var backBtn = document.getElementById('ta-back-results');
+  if (backBtn) backBtn.addEventListener('click', function() { showStage('results'); });
+
+  // Form Submit
+  var form = document.getElementById('ta-lead-form');
+  if (form) {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      var submitBtn = form.querySelector('[type="submit"]');
+      var originalHTML = submitBtn ? submitBtn.innerHTML : '';
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Wird gesendet\u2026'; }
+      fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      }).then(function(res) {
+        if (res.ok) {
+          window.location.href = '/danke';
+        } else {
+          window.location.href = '/danke';
+        }
+      }).catch(function() {
+        window.location.href = '/danke';
+      });
+    });
+  }
+
+  // --- Intro GSAP Animation ---
+  if (typeof gsap !== 'undefined') {
+    var introTl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.2 });
+    introTl
+      .from('.ta-intro__content .section-label', { y: -15, opacity: 0, duration: 0.4 })
+      .from('.ta-intro__h1', { y: 40, opacity: 0, duration: 0.6 }, '-=0.2')
+      .from('.ta-intro__lead', { y: 25, opacity: 0, duration: 0.5 }, '-=0.3')
+      .from('.terminal', { y: 25, opacity: 0, duration: 0.5 }, '-=0.3')
+      .from('#ta-start', { y: 20, opacity: 0, duration: 0.4 }, '-=0.2')
+      .from('.ta-features', { y: 15, opacity: 0, duration: 0.4 }, '-=0.2')
+      .from('.ta-proof', { y: 15, opacity: 0, duration: 0.4 }, '-=0.2')
+      .from('.ta-intro__visual', { scale: 0.92, opacity: 0, duration: 0.6 }, '-=0.8');
+
+    // Terminal lines type-effect Stagger
+    gsap.from('.ta-terminal-line', {
+      x: -20, opacity: 0, duration: 0.3, stagger: 0.12, ease: 'power2.out', delay: 0.7
+    });
+  }
+
+  // Init
+  showQuestion(1);
+})();
