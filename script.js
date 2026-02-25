@@ -374,7 +374,11 @@ window.addEventListener('load', initHeroAnimation);
 /* ===========================
    GSAP INIT
    =========================== */
+if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') {
+  console.warn('Timito: GSAP oder ScrollTrigger nicht geladen – Animationen deaktiviert.');
+} else {
 gsap.registerPlugin(ScrollTrigger);
+} // end GSAP guard
 
 /* ===========================
    SCROLL PROGRESS BAR
@@ -544,7 +548,7 @@ document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(
 /* ===========================
    GSAP ANIMATIONS
    =========================== */
-if (!prefersReducedMotion) {
+if (!prefersReducedMotion && typeof gsap !== 'undefined') {
 
   // Hero entrance handled by initHeroAnimation() on window load
 
@@ -607,7 +611,7 @@ if (!prefersReducedMotion) {
 
     ScrollTrigger.create({
       trigger: insiderWrap,
-      start: 'top top',
+      start: 'top 10%',
       end: '+=500%',
       pin: true,
       pinSpacing: true,
@@ -2398,45 +2402,53 @@ window.addEventListener('load', function () {
 
   if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
+  if (window.matchMedia('(max-width: 768px)').matches) return;
+
   var cards = gsap.utils.toArray('.truths__card');
   if (!cards.length) return;
 
-  // Mobile: keine Rotation, nur einfaches fade-up
-  var isMobile = window.matchMedia('(max-width: 768px)').matches;
-
-  if (isMobile) {
-    cards.forEach(function(card) {
-      gsap.from(card, {
-        opacity: 0, y: 30, duration: 0.5, ease: 'power3.out',
-        scrollTrigger: { trigger: card, start: 'top 88%' }
-      });
-    });
-    return;
-  }
-
-  // Desktop: Einflug-Animation — jede Card kommt schräg rein und richtet sich gerade aus
-  // Kein pin:true — verhindert den 1100px-freeze-Bug
   var startStates = [
-    { x: -100, y: 50, rotation: -7, opacity: 0 },
-    { x:    0, y: 70, rotation:  4, opacity: 0 },
-    { x:  100, y: 50, rotation: -3, opacity: 0 }
+    { x: -80, y: 60,  rotation: -6, opacity: 0 },
+    { x:   0, y: 80,  rotation:  4, opacity: 0 },
+    { x:  80, y: 60,  rotation: -3, opacity: 0 }
   ];
 
   cards.forEach(function(card, i) {
     gsap.set(card, startStates[i]);
-
-    gsap.to(card, {
-      x: 0, y: 0, rotation: 0, opacity: 1,
-      duration: 0.7,
-      ease: 'power3.out',
-      delay: i * 0.15,  // gestaffelt: Card 1 sofort, 2 nach 150ms, 3 nach 300ms
-      scrollTrigger: {
-        trigger: '.truths__stage',
-        start: 'top 75%',
-        toggleActions: 'play none none reverse'
-      }
-    });
   });
+
+  var tl = gsap.timeline({
+    scrollTrigger: {
+      trigger: '.truths',
+      start: 'top top',
+      end: '+=1100',
+      scrub: false,
+      pin: true,
+      pinSpacing: true,
+      onEnter: function() { tl.play(); },
+      onLeaveBack: function() {
+        tl.pause(0);
+        cards.forEach(function(card, i) {
+          gsap.set(card, startStates[i]);
+        });
+      }
+    }
+  });
+
+  tl.to(cards[0], {
+    x: 0, y: 0, rotation: 0, opacity: 1,
+    duration: 0.55, ease: 'power3.out'
+  });
+
+  tl.to(cards[1], {
+    x: 0, y: 0, rotation: 0, opacity: 1,
+    duration: 0.55, ease: 'power3.out'
+  }, '+=0.1');
+
+  tl.to(cards[2], {
+    x: 0, y: 0, rotation: 0, opacity: 1,
+    duration: 0.55, ease: 'power3.out'
+  }, '+=0.1');
 
   ScrollTrigger.refresh();
 
@@ -2446,8 +2458,6 @@ window.addEventListener('load', function () {
    BLOG PREVIEW — Card Reveal
    ============================================ */
 (function initBlogPreview() {
-  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
-
   var blogCards = gsap.utils.toArray('.blog-preview__card');
   if (!blogCards.length) return;
 
@@ -2462,4 +2472,4 @@ window.addEventListener('load', function () {
 /* ============================================
    SCROLLTRIGGER REFRESH
    ============================================ */
-if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
+ScrollTrigger.refresh();
