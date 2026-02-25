@@ -306,6 +306,8 @@
 
 // ── HERO ENTRANCE ANIMATION (Webflow-style) ──
 function initHeroAnimation() {
+  if (typeof gsap === 'undefined') return;
+
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (reduceMotion) {
     document.querySelectorAll(
@@ -707,14 +709,23 @@ if (!prefersReducedMotion) {
     const segments = JSON.parse(manifestoText.dataset.lines);
     manifestoText.innerHTML = '';
     segments.forEach(seg => {
-      seg.text.split('').forEach(char => {
-        if (char === ' ') {
-          manifestoText.appendChild(document.createTextNode(' '));
+      // Split into words, preserving spaces between them
+      var words = seg.text.split(/( +)/);
+      words.forEach(function(token) {
+        if (/^ +$/.test(token)) {
+          // Pure whitespace — insert as text node
+          manifestoText.appendChild(document.createTextNode(token));
         } else {
-          const span = document.createElement('span');
-          span.className = 'ml' + (seg.color ? ' ml--' + seg.color : '');
-          span.textContent = char;
-          manifestoText.appendChild(span);
+          // Wrap entire word in a no-break span
+          var wordSpan = document.createElement('span');
+          wordSpan.className = 'ml-word';
+          token.split('').forEach(function(char) {
+            var letterSpan = document.createElement('span');
+            letterSpan.className = 'ml' + (seg.color ? ' ml--' + seg.color : '');
+            letterSpan.textContent = char;
+            wordSpan.appendChild(letterSpan);
+          });
+          manifestoText.appendChild(wordSpan);
         }
       });
     });
@@ -829,6 +840,66 @@ if (!prefersReducedMotion) {
 
   // Section labels
   scrollReveal('.section-label', { y: 20, duration: 0.5, delay: 0 });
+
+  // Section headings — every h2 that enters viewport
+  gsap.utils.toArray('section h2, .trust h2, .process h2, .faq h2, .cta h2, .expertise h2, .services h2, .problem h2, .manifesto h2').forEach(function(el) {
+    // Skip if already inside a pinned element (insider / manifesto pin-wrap)
+    if (el.closest('#insiderPinWrap') || el.closest('#manifestoPin')) return;
+    gsap.from(el, {
+      scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+      y: 35, opacity: 0, duration: 0.75, ease: 'power3.out'
+    });
+  });
+
+  // Section intro paragraphs
+  gsap.utils.toArray('.section-intro').forEach(function(el) {
+    if (el.closest('#insiderPinWrap')) return;
+    gsap.from(el, {
+      scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+      y: 25, opacity: 0, duration: 0.65, delay: 0.1, ease: 'power3.out'
+    });
+  });
+
+  // Techstack cards — staggered per group
+  gsap.utils.toArray('.techstack__grid').forEach(function(grid) {
+    var cards = grid.querySelectorAll('.techstack__card');
+    gsap.from(cards, {
+      scrollTrigger: { trigger: grid, start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 40, opacity: 0, stagger: 0.08, duration: 0.6, ease: 'power3.out'
+    });
+  });
+
+  // Entry cards (horizontal scroll cards)
+  gsap.utils.toArray('.entry-card').forEach(function(card, i) {
+    gsap.from(card, {
+      scrollTrigger: { trigger: '.entry-paths__scroll-wrapper', start: 'top 80%', toggleActions: 'play none none reverse' },
+      y: 50, opacity: 0, duration: 0.7, delay: i * 0.12, ease: 'power3.out'
+    });
+  });
+
+  // Team heading
+  if (document.querySelector('.team__heading')) {
+    gsap.from('.team__heading', {
+      scrollTrigger: { trigger: '.team__heading', start: 'top 88%', toggleActions: 'play none none reverse' },
+      y: 30, opacity: 0, duration: 0.7, ease: 'power3.out'
+    });
+  }
+
+  // Reviews header
+  if (document.querySelector('.reviews__header')) {
+    gsap.from('.reviews__header', {
+      scrollTrigger: { trigger: '.reviews__header', start: 'top 88%', toggleActions: 'play none none reverse' },
+      y: 25, opacity: 0, duration: 0.6, ease: 'power3.out'
+    });
+  }
+
+  // Cases CTA strip
+  if (document.querySelector('.cases__cta-strip')) {
+    gsap.from('.cases__cta-strip', {
+      scrollTrigger: { trigger: '.cases__cta-strip', start: 'top 85%', toggleActions: 'play none none reverse' },
+      y: 30, opacity: 0, duration: 0.6, ease: 'power3.out'
+    });
+  }
 
   // Big Footer Type Reveal
   gsap.from('.footer-hero__line', {
@@ -1024,7 +1095,7 @@ document.querySelectorAll(
   }, { passive: true });
 
   // GSAP ScrollTrigger reveal for section heading
-  if (!prefersReducedMotion) {
+  if (!prefersReducedMotion && typeof gsap !== 'undefined') {
     gsap.from('.entry-paths .section-label, .entry-paths h2, .entry-paths .section-intro', {
       scrollTrigger: { trigger: '.entry-paths', start: 'top 85%' },
       y: 30, opacity: 0, stagger: 0.12, duration: 0.7, ease: 'power3.out'
@@ -1129,7 +1200,8 @@ document.querySelectorAll(
 window.addEventListener('load', function () {
 
   /* GSAP SCROLL ANIMATIONS */
-  if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
 
     gsap.registerPlugin(ScrollTrigger);
     var scrubDef = { start: 'top 85%', end: 'top 20%', scrub: 1 };
@@ -1253,7 +1325,8 @@ window.addEventListener('load', function () {
       var answer = document.getElementById(button.getAttribute('aria-controls'));
       if (!answer) return;
 
-      var useGSAP = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      var useGSAP = typeof gsap !== 'undefined' &&
+                    !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       faqSection.querySelectorAll('.faq__q').forEach(function(btn) {
         if (btn === button || btn.getAttribute('aria-expanded') !== 'true') return;
@@ -1395,7 +1468,8 @@ window.addEventListener('load', function () {
 
 /* GSAP: Platform card animations */
 window.addEventListener('load', function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!document.querySelector('.platform-grid')) return;
 
   gsap.registerPlugin(ScrollTrigger);
@@ -1627,7 +1701,8 @@ window.addEventListener('load', function () {
 
 /* GSAP: Deliverable card animations */
 window.addEventListener('load', function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!document.querySelector('.deliverable-grid')) return;
 
   gsap.registerPlugin(ScrollTrigger);
@@ -1713,7 +1788,8 @@ window.addEventListener('load', function () {
 
 /* GSAP: Segment card animations */
 window.addEventListener('load', function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!document.querySelector('.segment-grid')) return;
 
   gsap.registerPlugin(ScrollTrigger);
@@ -1799,7 +1875,8 @@ window.addEventListener('load', function () {
 
 /* GSAP: Philosophy card + Trust card animations */
 window.addEventListener('load', function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   if (!document.querySelector('.philosophy-grid')) return;
 
   gsap.registerPlugin(ScrollTrigger);
@@ -1892,7 +1969,8 @@ window.addEventListener('load', function () {
 
 /* GSAP: Flow blocks + Partner card animations */
 window.addEventListener('load', function () {
-  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined' ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
   gsap.registerPlugin(ScrollTrigger);
 
@@ -2116,6 +2194,7 @@ window.addEventListener('load', function () {
 (function initLeistProzess() {
   var stepsWrap = document.getElementById('leistSteps');
   if (!stepsWrap) return;
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     stepsWrap.querySelectorAll('.leist-step').forEach(function(s) {
       s.classList.add('is-active');
@@ -2169,7 +2248,8 @@ window.addEventListener('load', function () {
 
   function faqClose(btn, el, dur) {
     btn.setAttribute('aria-expanded', 'false');
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (typeof gsap !== 'undefined' &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       gsap.killTweensOf(el);
       var tl = gsap.timeline({
         onComplete: function() { el.hidden = true; el.removeAttribute('style'); }
@@ -2183,7 +2263,8 @@ window.addEventListener('load', function () {
 
   function faqOpen(btn, el, dur) {
     btn.setAttribute('aria-expanded', 'true');
-    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    if (typeof gsap !== 'undefined' &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       gsap.killTweensOf(el);
       el.hidden = false;
       el.style.overflow = 'hidden';
@@ -2265,7 +2346,7 @@ window.addEventListener('load', function () {
 
   var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (!reducedMotion) {
+  if (typeof gsap !== 'undefined' && !reducedMotion) {
     blogCards.forEach(function(card, i) {
       gsap.from(card, {
         scrollTrigger: {
@@ -2384,6 +2465,7 @@ window.addEventListener('load', function () {
    ============================================ */
 (function initTruthsAnimation() {
 
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
   var cards = gsap.utils.toArray('.truths__card');
   if (!cards.length) return;
@@ -2433,6 +2515,7 @@ window.addEventListener('load', function () {
    BLOG PREVIEW — Card Reveal
    ============================================ */
 (function initBlogPreview() {
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
 
   var blogCards = gsap.utils.toArray('.blog-preview__card');
   if (!blogCards.length) return;
@@ -2448,4 +2531,4 @@ window.addEventListener('load', function () {
 /* ============================================
    SCROLLTRIGGER REFRESH
    ============================================ */
-ScrollTrigger.refresh();
+if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
