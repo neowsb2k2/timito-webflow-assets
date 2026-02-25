@@ -556,10 +556,6 @@ document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(
 /* ===========================
    GSAP ANIMATIONS
    =========================== */
-// Wrapped in window.load: stellt sicher dass GSAP geladen ist
-// bevor Animationen initialisiert werden (Webflow jsDelivr CDN Timing-Problem).
-window.addEventListener('load', function() {
-if (typeof gsap === 'undefined') return;
 if (!prefersReducedMotion) {
 
   // Hero entrance handled by initHeroAnimation() on window load
@@ -871,8 +867,7 @@ if (!prefersReducedMotion) {
     scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
     x: -40, ease: 'none'
   });
-} // end if (!prefersReducedMotion)
-}); // end window.load GSAP ANIMATIONS
+}
 
 /* ===========================
    REVIEWS — Scroll Buttons
