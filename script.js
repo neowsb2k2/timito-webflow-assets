@@ -559,23 +559,6 @@ if (!prefersReducedMotion) {
     });
   }
 
-  // Tech stack cards
-  // Techstack — reveal groups then cards
-  gsap.utils.toArray('.techstack__group').forEach((group) => {
-    gsap.from(group.querySelector('.techstack__group-label'), {
-      scrollTrigger: { trigger: group, start: 'top 88%', toggleActions: 'play none none reverse' },
-      x: -20, opacity: 0, duration: 0.5, ease: 'power3.out'
-    });
-    gsap.utils.toArray(group.querySelectorAll('.techstack__card')).forEach((card, ci) => {
-      gsap.from(card, {
-        scrollTrigger: { trigger: group, start: 'top 85%', toggleActions: 'play none none reverse' },
-        y: 35, opacity: 0, scale: 0.97,
-        duration: 0.55, delay: ci * 0.07,
-        ease: 'power3.out'
-      });
-    });
-  });
-
   // Problem cards
   scrollReveal('.problem__card');
 
@@ -624,7 +607,7 @@ if (!prefersReducedMotion) {
 
     ScrollTrigger.create({
       trigger: insiderWrap,
-      start: 'top 10%',
+      start: 'top top',
       end: '+=500%',
       pin: true,
       pinSpacing: true,
@@ -2405,3 +2388,76 @@ window.addEventListener('load', function () {
 
   headings.forEach(function(h) { observer.observe(h); });
 })();
+
+/* ============================================
+   TRUTHS SECTION — GSAP SCROLL ANIMATION
+   Drei Cards fliegen nacheinander ein,
+   richten sich gerade aus und docken an.
+   ============================================ */
+(function initTruthsAnimation() {
+
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+
+  var cards = gsap.utils.toArray('.truths__card');
+  if (!cards.length) return;
+
+  // Mobile: keine Rotation, nur einfaches fade-up
+  var isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+  if (isMobile) {
+    cards.forEach(function(card) {
+      gsap.from(card, {
+        opacity: 0, y: 30, duration: 0.5, ease: 'power3.out',
+        scrollTrigger: { trigger: card, start: 'top 88%' }
+      });
+    });
+    return;
+  }
+
+  // Desktop: Einflug-Animation — jede Card kommt schräg rein und richtet sich gerade aus
+  // Kein pin:true — verhindert den 1100px-freeze-Bug
+  var startStates = [
+    { x: -100, y: 50, rotation: -7, opacity: 0 },
+    { x:    0, y: 70, rotation:  4, opacity: 0 },
+    { x:  100, y: 50, rotation: -3, opacity: 0 }
+  ];
+
+  cards.forEach(function(card, i) {
+    gsap.set(card, startStates[i]);
+
+    gsap.to(card, {
+      x: 0, y: 0, rotation: 0, opacity: 1,
+      duration: 0.7,
+      ease: 'power3.out',
+      delay: i * 0.15,  // gestaffelt: Card 1 sofort, 2 nach 150ms, 3 nach 300ms
+      scrollTrigger: {
+        trigger: '.truths__stage',
+        start: 'top 75%',
+        toggleActions: 'play none none reverse'
+      }
+    });
+  });
+
+  ScrollTrigger.refresh();
+
+})();
+
+/* ============================================
+   BLOG PREVIEW — Card Reveal
+   ============================================ */
+(function initBlogPreview() {
+  var blogCards = gsap.utils.toArray('.blog-preview__card');
+  if (!blogCards.length) return;
+
+  blogCards.forEach(function(card, i) {
+    gsap.from(card, {
+      opacity: 0, y: 40, duration: 0.6, delay: i * 0.12, ease: 'power3.out',
+      scrollTrigger: { trigger: card, start: 'top 85%' }
+    });
+  });
+})();
+
+/* ============================================
+   SCROLLTRIGGER REFRESH
+   ============================================ */
+ScrollTrigger.refresh();
