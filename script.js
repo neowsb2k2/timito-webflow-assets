@@ -374,19 +374,7 @@ window.addEventListener('load', initHeroAnimation);
 /* ===========================
    GSAP INIT
    =========================== */
-// Guard: GSAP muss geladen sein bevor registerPlugin aufgerufen wird.
-// In Webflow kann script.js (via jsDelivr CDN im head) vor GSAP (body-end) laufen.
-(function() {
-  if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-    gsap.registerPlugin(ScrollTrigger);
-  } else {
-    window.addEventListener('load', function() {
-      if (typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined') {
-        gsap.registerPlugin(ScrollTrigger);
-      }
-    });
-  }
-})();
+gsap.registerPlugin(ScrollTrigger);
 
 /* ===========================
    SCROLL PROGRESS BAR
@@ -2480,4 +2468,4 @@ window.addEventListener('load', function () {
 /* ============================================
    SCROLLTRIGGER REFRESH
    ============================================ */
-if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
+ScrollTrigger.refresh();
