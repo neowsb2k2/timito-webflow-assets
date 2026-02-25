@@ -438,7 +438,14 @@ h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spac
 .trust-quote cite { font-family: var(--font-mono); font-size: .75rem; color: var(--color-text-muted); font-style: normal }
 
 @media(max-width: 768px) {
-  .insider__grid { grid-template-columns: 1fr }
+  /* Insider — static layout, no pin */
+  .insider__pin-wrap { min-height: auto; display: block; overflow: visible }
+  .insider__intro { position: relative; inset: auto; padding: var(--space-6) var(--container-px); pointer-events: auto }
+  .bts { display: none }
+  .insider__grid { grid-template-columns: 1fr; opacity: 1 }
+  .insider__card { opacity: 1 !important; transform: none !important }
+
+  /* Team — single column */
   .team__grid { grid-template-columns: 1fr; max-width: 420px }
 }
 
@@ -962,14 +969,14 @@ h4 { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spac
 .footer__bottom nav a:hover { color: var(--color-accent) }
 
 @media(max-width: 768px) {
-  .footer__grid { grid-template-columns: 1fr 1fr }
+  .footer__grid { grid-template-columns: 1fr 1fr; align-items: start }
   .footer__brand { grid-column: span 2 }
   .footer__contact { grid-column: span 2 }
 }
 @media(max-width: 480px) {
-  .footer__grid { grid-template-columns: 1fr 1fr; gap: 1.75rem }
-  .footer__brand { grid-column: span 2 }
-  .footer__contact { grid-column: span 2 }
+  .footer__grid { grid-template-columns: 1fr; gap: 1.75rem }
+  .footer__brand { grid-column: span 1 }
+  .footer__contact { grid-column: span 1 }
   .footer__bottom { flex-direction: column; text-align: center }
   .footer__bottom small { white-space: normal }
   .footer ul { gap: .55rem }
@@ -1803,9 +1810,9 @@ header#site-header {
   .footer > .container { padding: var(--space-3) var(--space-3) var(--space-2) }
   .footer__social { gap: .5rem; flex-wrap: wrap }
 
-  /* Funnel — tighter */
+  /* Funnel — tighter but keep 2-col for options */
   .funnel { padding: 1.5rem 1rem }
-  .funnel__options { grid-template-columns: 1fr }
+  .funnel__options { grid-template-columns: repeat(2, 1fr) }
 
   /* Sections — reduce spacing */
   .problem, .expertise, .services, .trust, .process, .faq { padding: var(--space-6) 0 }
@@ -5308,4 +5315,41 @@ header#site-header {
   color: var(--color-text-muted);
   max-width: 680px;
   margin-bottom: var(--space-4);
+}
+
+/* ============================================
+   MOBILE-FIRST FIXES — Team CTA + Whitespace
+   ============================================ */
+
+/* Team CTA link (visible on all viewports) */
+.team__cta-link {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  font-family: var(--font-mono);
+  font-size: .72rem;
+  color: var(--color-accent);
+  text-decoration: none;
+  margin-top: 1rem;
+  transition: color var(--transition-fast);
+}
+.team__cta-link:hover { color: var(--color-text) }
+
+/* ── Mobile whitespace reduction (≤ 768px) ── */
+@media(max-width: 768px) {
+  /* Team cards — compact info padding */
+  .team__info { padding: 1rem 1.25rem 1.25rem }
+  .team__info p { font-size: .82rem; margin-bottom: .75rem }
+
+  /* General section whitespace reduction */
+  h2 { margin-bottom: var(--space-4) }
+  .section-intro { margin-bottom: var(--space-4) }
+  .trust-quote { margin-top: var(--space-4) }
+}
+
+/* ── Tighter section padding on small mobile (≤ 480px) ── */
+@media(max-width: 480px) {
+  .expertise { padding: var(--space-6) 0 }
+  .team__info { padding: .75rem 1rem 1rem }
+  .team__avatar img { aspect-ratio: 4/3 }
 }

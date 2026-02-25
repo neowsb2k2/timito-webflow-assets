@@ -543,7 +543,9 @@ document.querySelectorAll('[data-count]').forEach(el => counterObserver.observe(
 
 /* ===========================
    GSAP ANIMATIONS
+   (wrapped in load to ensure correct layout positions)
    =========================== */
+window.addEventListener('load', function () {
 if (!prefersReducedMotion) {
 
   // Hero entrance handled by initHeroAnimation() on window load
@@ -551,9 +553,9 @@ if (!prefersReducedMotion) {
   // Generic scroll reveal
   function scrollReveal(selector, vars) {
     gsap.utils.toArray(selector).forEach((el, i) => {
-      if (el.closest('#ta-funnel')) return;
+      if (el.closest('#ta-funnel') || el.closest('#insiderPinWrap')) return;
       gsap.from(el, {
-        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
+        scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse', invalidateOnRefresh: true },
         y: 50, opacity: 0, duration: 0.7, delay: i * 0.08, ease: 'power3.out',
         ...vars
       });
@@ -585,14 +587,13 @@ if (!prefersReducedMotion) {
 
   // Solution bridge
   gsap.from('.solution-bridge', {
-    scrollTrigger: { trigger: '.solution-bridge', start: 'top 85%', toggleActions: 'play none none reverse' },
-    y: 40, opacity: 0, duration: 0.8, ease: 'power3.out'
+    scrollTrigger: { trigger: '.solution-bridge', start: 'top 90%', end: 'top 50%', scrub: 0.6, invalidateOnRefresh: true },
+    y: 50, opacity: 0, ease: 'power3.out'
   });
 
-  // Insider section — pinned scroll sequence:
-  // Phase 1: Heading + copy centered → fade out
-  // Phase 2: BTS text fades in centered → moves to top
-  // Phase 3: Cards appear below BTS heading
+  // Insider section — pinned scroll sequence (desktop only):
+  // Mobile: show everything statically, no pin (avoids ~2500px empty scroll)
+  // Desktop: Phase 1 heading → Phase 2 BTS → Phase 3 cards
   const insiderWrap = document.getElementById('insiderPinWrap');
   if (insiderWrap) {
     const insiderIntro = document.getElementById('insiderIntro');
@@ -600,96 +601,102 @@ if (!prefersReducedMotion) {
     const btsText = insiderWrap.querySelector('.bts__text');
     const insiderCards = insiderWrap.querySelectorAll('.insider__card');
     const insiderGrid = insiderWrap.querySelector('.insider__grid');
+    const isInsiderMobile = window.innerWidth <= 768;
 
-    // Initial states
-    gsap.set(insiderCards, { opacity: 0, y: 50 });
-    if (btsText) gsap.set(btsText, { opacity: 0 });
-    if (insiderGrid) gsap.set(insiderGrid, { opacity: 0 });
+    if (isInsiderMobile) {
+      // Mobile: show intro + cards statically, hide BTS overlay
+      if (insiderIntro) gsap.set(insiderIntro, { opacity: 1 });
+      if (btsText) gsap.set(btsText, { opacity: 0 });
+      if (insiderGrid) gsap.set(insiderGrid, { opacity: 1 });
+      gsap.set(insiderCards, { opacity: 1, y: 0 });
+    } else {
+      // Desktop: pinned scroll sequence
+      gsap.set(insiderCards, { opacity: 0, y: 50 });
+      if (btsText) gsap.set(btsText, { opacity: 0 });
+      if (insiderGrid) gsap.set(insiderGrid, { opacity: 0 });
 
-    ScrollTrigger.create({
-      trigger: insiderWrap,
-      start: 'top top',
-      end: '+=500%',
-      pin: true,
-      pinSpacing: true,
-      scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress;
+      ScrollTrigger.create({
+        trigger: insiderWrap,
+        start: 'top top',
+        end: '+=500%',
+        pin: true,
+        pinSpacing: true,
+        scrub: true,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const p = self.progress;
 
-        // ── Phase 1 (0–0.25): Heading + copy HOLD visible, readable ──
-        // ── Phase 1b (0.25–0.35): Scale up bigger + fade out ──
-        if (insiderIntro) {
-          if (p < 0.25) {
-            gsap.set(insiderIntro, { opacity: 1, scale: 1, filter: 'blur(0px)' });
-          } else if (p < 0.35) {
-            const t = (p - 0.25) / 0.10;
-            gsap.set(insiderIntro, {
-              opacity: 1 - t,
-              scale: 1 + t * 0.25,
-              filter: `blur(${t * 12}px)`
-            });
-          } else {
-            gsap.set(insiderIntro, { opacity: 0, scale: 1.25 });
-          }
-        }
-
-        // ── Whitespace pause: 0.35–0.42 (nothing visible) ──
-
-        // ── Phase 2 (0.42–0.62): BTS fades in centered, then moves to top ──
-        if (btsText && btsEl) {
-          if (p < 0.42) {
-            gsap.set(btsText, { opacity: 0, y: 0 });
-          } else if (p < 0.50) {
-            // Fade in centered
-            const t = (p - 0.42) / 0.08;
-            gsap.set(btsText, {
-              opacity: t,
-              scale: 0.9 + t * 0.1,
-              filter: `blur(${(1 - t) * 8}px)`,
-              y: 0
-            });
-          } else if (p < 0.56) {
-            // Hold centered
-            gsap.set(btsText, { opacity: 1, scale: 1, filter: 'blur(0px)', y: 0 });
-          } else if (p < 0.65) {
-            // Move to top
-            const t = (p - 0.56) / 0.09;
-            const wrapH = insiderWrap.offsetHeight;
-            const targetY = -(wrapH / 2) + 60;
-            gsap.set(btsText, { opacity: 1, scale: 1 - t * 0.15, filter: 'blur(0px)', y: targetY * t });
-          } else {
-            // Parked at top
-            const wrapH = insiderWrap.offsetHeight;
-            const targetY = -(wrapH / 2) + 60;
-            gsap.set(btsText, { opacity: 1, scale: 0.85, filter: 'blur(0px)', y: targetY });
-          }
-        }
-
-        // ── Phase 3 (0.65–0.88): Cards fade in staggered ──
-        if (insiderGrid) {
-          gsap.set(insiderGrid, { opacity: p >= 0.64 ? 1 : 0 });
-        }
-
-        insiderCards.forEach((card, i) => {
-          const cardStart = 0.65 + i * 0.05;
-          const cardEnd = cardStart + 0.12;
-          let cardOpacity, cardY;
-          if (p < cardStart) {
-            cardOpacity = 0;
-            cardY = 50;
-          } else if (p < cardEnd) {
-            const t = (p - cardStart) / (cardEnd - cardStart);
-            cardOpacity = t;
-            cardY = 50 * (1 - t);
-          } else {
-            cardOpacity = 1;
-            cardY = 0;
+          // ── Phase 1 (0–0.25): Heading + copy HOLD visible, readable ──
+          // ── Phase 1b (0.25–0.35): Scale up bigger + fade out ──
+          if (insiderIntro) {
+            if (p < 0.25) {
+              gsap.set(insiderIntro, { opacity: 1, scale: 1, filter: 'blur(0px)' });
+            } else if (p < 0.35) {
+              const t = (p - 0.25) / 0.10;
+              gsap.set(insiderIntro, {
+                opacity: 1 - t,
+                scale: 1 + t * 0.25,
+                filter: `blur(${t * 12}px)`
+              });
+            } else {
+              gsap.set(insiderIntro, { opacity: 0, scale: 1.25 });
+            }
           }
 
-          gsap.set(card, { opacity: cardOpacity, y: cardY });
-        });
-      }
-    });
+          // ── Whitespace pause: 0.35–0.42 (nothing visible) ──
+
+          // ── Phase 2 (0.42–0.62): BTS fades in centered, then moves to top ──
+          if (btsText && btsEl) {
+            if (p < 0.42) {
+              gsap.set(btsText, { opacity: 0, y: 0 });
+            } else if (p < 0.50) {
+              const t = (p - 0.42) / 0.08;
+              gsap.set(btsText, {
+                opacity: t,
+                scale: 0.9 + t * 0.1,
+                filter: `blur(${(1 - t) * 8}px)`,
+                y: 0
+              });
+            } else if (p < 0.56) {
+              gsap.set(btsText, { opacity: 1, scale: 1, filter: 'blur(0px)', y: 0 });
+            } else if (p < 0.65) {
+              const t = (p - 0.56) / 0.09;
+              const wrapH = insiderWrap.offsetHeight;
+              const targetY = -(wrapH / 2) + 60;
+              gsap.set(btsText, { opacity: 1, scale: 1 - t * 0.15, filter: 'blur(0px)', y: targetY * t });
+            } else {
+              const wrapH = insiderWrap.offsetHeight;
+              const targetY = -(wrapH / 2) + 60;
+              gsap.set(btsText, { opacity: 1, scale: 0.85, filter: 'blur(0px)', y: targetY });
+            }
+          }
+
+          // ── Phase 3 (0.65–0.88): Cards fade in staggered ──
+          if (insiderGrid) {
+            gsap.set(insiderGrid, { opacity: p >= 0.64 ? 1 : 0 });
+          }
+
+          insiderCards.forEach((card, i) => {
+            const cardStart = 0.65 + i * 0.05;
+            const cardEnd = cardStart + 0.12;
+            let cardOpacity, cardY;
+            if (p < cardStart) {
+              cardOpacity = 0;
+              cardY = 50;
+            } else if (p < cardEnd) {
+              const t = (p - cardStart) / (cardEnd - cardStart);
+              cardOpacity = t;
+              cardY = 50 * (1 - t);
+            } else {
+              cardOpacity = 1;
+              cardY = 0;
+            }
+
+            gsap.set(card, { opacity: cardOpacity, y: cardY });
+          });
+        }
+      });
+    }
   }
 
   // Team cards
@@ -697,8 +704,8 @@ if (!prefersReducedMotion) {
 
   // Trust quote
   gsap.from('.trust-quote', {
-    scrollTrigger: { trigger: '.trust-quote', start: 'top 85%', toggleActions: 'play none none reverse' },
-    x: -30, opacity: 0, duration: 0.8, ease: 'power3.out'
+    scrollTrigger: { trigger: '.trust-quote', start: 'top 90%', end: 'top 45%', scrub: 0.6, invalidateOnRefresh: true },
+    x: -40, opacity: 0, ease: 'power3.out'
   });
 
   // Manifesto — pinned letter-by-letter reveal on scroll
@@ -733,87 +740,96 @@ if (!prefersReducedMotion) {
 
     const allLetters = manifestoText.querySelectorAll('.ml');
 
-    ScrollTrigger.create({
-      trigger: manifestoPin,
-      start: 'top top',
-      end: '+=500%',
-      pin: true,
-      pinSpacing: true,
-      scrub: true,
-      onUpdate: (self) => {
-        const p = self.progress;
+    if (window.innerWidth > 768) {
+      // Desktop: pinned letter-by-letter reveal on scroll
+      ScrollTrigger.create({
+        trigger: manifestoPin,
+        start: 'top top',
+        end: '+=500%',
+        pin: true,
+        pinSpacing: true,
+        scrub: true,
+        invalidateOnRefresh: true,
+        onUpdate: (self) => {
+          const p = self.progress;
 
-        // Heading fades in 0–0.08
-        if (manifestoHeading) {
-          if (p < 0.08) {
-            gsap.set(manifestoHeading, { opacity: p / 0.08 });
-          } else {
-            gsap.set(manifestoHeading, { opacity: 1 });
+          // Heading fades in 0–0.08
+          if (manifestoHeading) {
+            if (p < 0.08) {
+              gsap.set(manifestoHeading, { opacity: p / 0.08 });
+            } else {
+              gsap.set(manifestoHeading, { opacity: 1 });
+            }
+          }
+
+          // Letters reveal 0.08–0.70
+          const total = allLetters.length;
+          const revealStart = 0.08;
+          const revealEnd = 0.70;
+          const revealP = Math.max(0, Math.min(1, (p - revealStart) / (revealEnd - revealStart)));
+          const lettersToLight = Math.floor(revealP * total);
+
+          allLetters.forEach((letter, i) => {
+            if (i < lettersToLight) {
+              letter.classList.add('is-lit');
+            } else {
+              letter.classList.remove('is-lit');
+            }
+          });
+
+          // After fully revealed (0.75–0.95): scale up + fade out
+          const mContent = manifestoPin.querySelector('.manifesto__content');
+          if (mContent) {
+            if (p < 0.75) {
+              gsap.set(mContent, { scale: 1, opacity: 1, filter: 'blur(0px)' });
+            } else if (p < 0.95) {
+              const t = (p - 0.75) / 0.20;
+              gsap.set(mContent, {
+                scale: 1 + t * 1.5,
+                opacity: 1 - t,
+                filter: `blur(${t * 6}px)`
+              });
+            } else {
+              gsap.set(mContent, { opacity: 0 });
+            }
           }
         }
-
-        // Letters reveal 0.08–0.70
-        const total = allLetters.length;
-        const revealStart = 0.08;
-        const revealEnd = 0.70;
-        const revealP = Math.max(0, Math.min(1, (p - revealStart) / (revealEnd - revealStart)));
-        const lettersToLight = Math.floor(revealP * total);
-
-        allLetters.forEach((letter, i) => {
-          if (i < lettersToLight) {
-            letter.classList.add('is-lit');
-          } else {
-            letter.classList.remove('is-lit');
-          }
-        });
-
-        // After fully revealed (0.75–0.95): scale up + fade out
-        const mContent = manifestoPin.querySelector('.manifesto__content');
-        if (mContent) {
-          if (p < 0.75) {
-            gsap.set(mContent, { scale: 1, opacity: 1, filter: 'blur(0px)' });
-          } else if (p < 0.95) {
-            const t = (p - 0.75) / 0.20;
-            gsap.set(mContent, {
-              scale: 1 + t * 1.5,
-              opacity: 1 - t,
-              filter: `blur(${t * 6}px)`
-            });
-          } else {
-            gsap.set(mContent, { opacity: 0 });
-          }
-        }
-      }
-    });
+      });
+    } else {
+      // Mobile: show all letters immediately, no pin (avoids ~2500px empty scroll)
+      allLetters.forEach(function(letter) { letter.classList.add('is-lit'); });
+      if (manifestoHeading) gsap.set(manifestoHeading, { opacity: 1 });
+    }
   }
 
-  // Service cards — staggered fly-in one after another
+  // Service cards — timeline with scrub so stagger is tied to scroll position
+  // (single ScrollTrigger instance → no race conditions on reverse)
   const svcCards = gsap.utils.toArray('.svc');
   if (svcCards.length) {
+    // Set initial hidden state SYNCHRONOUSLY so cards never flash visible first
+    gsap.set(svcCards, { opacity: 0, y: 60, scale: 0.95 });
+
+    const svcTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '.services__scroll-wrap',
+        start: 'top 80%',
+        end: 'top 15%',
+        scrub: 0.8,
+        invalidateOnRefresh: true,
+      }
+    });
+
     svcCards.forEach((card, i) => {
       const arrow = card.querySelector('.svc__arrow');
-
-      gsap.fromTo(card,
-        { opacity: 0, y: 60, scale: 0.95 },
-        {
-          opacity: 1, y: 0, scale: 1,
-          duration: 0.7,
-          delay: i * 0.15,
-          ease: 'power3.out',
-          scrollTrigger: {
-            trigger: '.services__scroll-wrap',
-            start: 'top 70%',
-            toggleActions: 'play none none reverse',
-            onEnter: () => { if (arrow) arrow.classList.add('is-animated') },
-            onLeaveBack: () => { if (arrow) arrow.classList.remove('is-animated') }
-          }
-        }
-      );
+      svcTl.to(card, {
+        opacity: 1, y: 0, scale: 1,
+        duration: 0.6,
+        ease: 'power3.out',
+        onStart: () => { if (arrow) arrow.classList.add('is-animated'); },
+        onReverseComplete: () => { if (arrow) arrow.classList.remove('is-animated'); }
+      }, i * 0.08); // timeline position — each card starts 0.08 units after the previous
     });
   }
-
-  // Case cards
-  scrollReveal('.case');
 
   // Review cards
   gsap.from('.review-card', {
@@ -912,20 +928,27 @@ if (!prefersReducedMotion) {
     scale: 0.8, opacity: 0, duration: 0.6, delay: 0.3, ease: 'elastic.out(1, 0.6)'
   });
 
-  // Horizontal marquee scroll effect on footer lines
-  gsap.to('.footer-hero__line--accent:first-child', {
-    scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
-    x: -60, ease: 'none'
-  });
-  gsap.to('.footer-hero__line--outline', {
-    scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
-    x: 60, ease: 'none'
-  });
-  gsap.to('.footer-hero__line--accent:last-child', {
-    scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
-    x: -40, ease: 'none'
-  });
-}
+  // Horizontal marquee scroll effect on footer lines (desktop only — x shift clips text on mobile)
+  if (window.innerWidth > 768) {
+    gsap.to('.footer-hero__line--accent:first-child', {
+      scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      x: -60, ease: 'none'
+    });
+    gsap.to('.footer-hero__line--outline', {
+      scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      x: 60, ease: 'none'
+    });
+    gsap.to('.footer-hero__line--accent:last-child', {
+      scrollTrigger: { trigger: '.footer-hero', start: 'top bottom', end: 'bottom top', scrub: 1 },
+      x: -40, ease: 'none'
+    });
+  }
+
+  // Refresh after all animations are registered so pinned positions are correct
+  ScrollTrigger.refresh();
+
+} // end !prefersReducedMotion
+}); // end window load
 
 /* ===========================
    REVIEWS — Scroll Buttons
@@ -1034,30 +1057,29 @@ if (contactForm) {
    =========================== */
 console.log('%c TIMITO MEDIA %c Tracking-First ', 'background:#ff2d78;color:#fff;padding:4px 8px;border-radius:4px 0 0 4px;font-weight:bold;font-size:11px', 'background:#00d4ff;color:#0a0a0f;padding:4px 8px;border-radius:0 4px 4px 0;font-weight:bold;font-size:11px');
 
-// ── SECTION REVEAL ON SCROLL ──
-// Adds .is-visible class when sections enter viewport
-// CSS handles the actual animation — JS only triggers the class
-
-const revealObserver = new IntersectionObserver((entries) => {
-  entries.forEach(entry => {
-    if (entry.isIntersecting) {
-      entry.target.classList.add('is-visible');
-      // Stop observing once revealed (one-shot)
-      revealObserver.unobserve(entry.target);
-    }
+// ── SECTION REVEAL ON SCROLL (CSS fallback when GSAP unavailable) ──
+// GSAP scrollReveal handles these elements when available.
+// This IntersectionObserver is a progressive-enhancement fallback only.
+if (typeof gsap === 'undefined') {
+  const revealObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-visible');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, {
+    threshold: 0.1,
+    rootMargin: '0px 0px -60px 0px'
   });
-}, {
-  threshold: 0.1,
-  rootMargin: '0px 0px -60px 0px'
-});
 
-// Observe all major cards and grid items
-document.querySelectorAll(
-  '.problem__card, .team__card, .case, .step, .faq__item'
-).forEach(el => {
-  el.classList.add('reveal-item');
-  revealObserver.observe(el);
-});
+  document.querySelectorAll(
+    '.problem__card, .team__card, .step, .faq__item'
+  ).forEach(el => {
+    el.classList.add('reveal-item');
+    revealObserver.observe(el);
+  });
+}
 
 /* ===========================
    ENTRY PATHS — Drag Scroll + Stacked Card Effect
@@ -1095,13 +1117,8 @@ document.querySelectorAll(
     wrapper.scrollLeft = touchScrollLeft + diff;
   }, { passive: true });
 
-  // GSAP ScrollTrigger reveal for section heading
-  if (!prefersReducedMotion && typeof gsap !== 'undefined') {
-    gsap.from('.entry-paths .section-label, .entry-paths h2, .entry-paths .section-intro', {
-      scrollTrigger: { trigger: '.entry-paths', start: 'top 85%' },
-      y: 30, opacity: 0, stagger: 0.12, duration: 0.7, ease: 'power3.out'
-    });
-  }
+  // Entry-paths heading animation handled by main GSAP load handler
+  // (scrollReveal, h2 loop, section-intro loop — consistent with all sections)
 })();
 
 /* ===========================
@@ -2503,8 +2520,6 @@ window.addEventListener('load', function () {
     });
   });
 
-  ScrollTrigger.refresh();
-
 })();
 
 /* ============================================
@@ -2523,11 +2538,6 @@ window.addEventListener('load', function () {
     });
   });
 })();
-
-/* ============================================
-   SCROLLTRIGGER REFRESH
-   ============================================ */
-if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
 
 /* ============================================
    TRACKING ANALYSE — tracking-analyse.html
