@@ -5164,6 +5164,7 @@ header#site-header {
 }
 .ta-intro__accent { color: var(--color-accent-hot); }
 .ta-intro__lead { font-size: 1rem; color: var(--color-text-muted); line-height: 1.6; margin-bottom: var(--space-4); }
+#ta-start { margin-top: var(--space-4); }
 .ta-intro__visual-label { text-align: center; font-family: var(--font-mono); font-size: .78rem; color: var(--color-text-muted); margin-top: var(--space-2); }
 
 /* Terminal Lines */
@@ -5284,3 +5285,27 @@ header#site-header {
 .ta-footer__links { display: flex; gap: var(--space-3); }
 .ta-footer__links a { font-family: var(--font-mono); font-size: .65rem; color: var(--color-text-muted); transition: color var(--transition-fast); }
 .ta-footer__links a:hover { color: var(--color-accent); }
+
+/* Privacy Note (Form) */
+.ta-privacy-note {
+  font-size: .72rem;
+  color: var(--color-text-muted);
+  line-height: 1.5;
+  padding: var(--space-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+  font-family: var(--font-mono);
+}
+.ta-privacy-note a {
+  color: var(--color-accent);
+  text-decoration: underline;
+}
+
+/* Form Subtitle */
+.ta-form__subtitle {
+  font-size: .88rem;
+  color: var(--color-text-muted);
+  max-width: 680px;
+  margin-bottom: var(--space-4);
+}

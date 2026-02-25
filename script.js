@@ -551,6 +551,7 @@ if (!prefersReducedMotion) {
   // Generic scroll reveal
   function scrollReveal(selector, vars) {
     gsap.utils.toArray(selector).forEach((el, i) => {
+      if (el.closest('#ta-funnel')) return;
       gsap.from(el, {
         scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
         y: 50, opacity: 0, duration: 0.7, delay: i * 0.08, ease: 'power3.out',
@@ -843,8 +844,8 @@ if (!prefersReducedMotion) {
 
   // Section headings — every h2 that enters viewport
   gsap.utils.toArray('section h2, .trust h2, .process h2, .faq h2, .cta h2, .expertise h2, .services h2, .problem h2, .manifesto h2').forEach(function(el) {
-    // Skip if already inside a pinned element (insider / manifesto pin-wrap)
-    if (el.closest('#insiderPinWrap') || el.closest('#manifestoPin')) return;
+    // Skip if already inside a pinned element (insider / manifesto pin-wrap) or ta-funnel
+    if (el.closest('#insiderPinWrap') || el.closest('#manifestoPin') || el.closest('#ta-funnel')) return;
     gsap.from(el, {
       scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
       y: 35, opacity: 0, duration: 0.75, ease: 'power3.out'
@@ -853,7 +854,7 @@ if (!prefersReducedMotion) {
 
   // Section intro paragraphs
   gsap.utils.toArray('.section-intro').forEach(function(el) {
-    if (el.closest('#insiderPinWrap')) return;
+    if (el.closest('#insiderPinWrap') || el.closest('#ta-funnel')) return;
     gsap.from(el, {
       scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none reverse' },
       y: 25, opacity: 0, duration: 0.65, delay: 0.1, ease: 'power3.out'
@@ -2558,6 +2559,13 @@ if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
     state.currentStage = id;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // GSAP-Properties zurücksetzen die global gesetzt wurden
+    if (typeof gsap !== 'undefined') {
+      gsap.set(target.querySelectorAll('.section-label, h2, h3, p, .ta-quiz__question.active *'), {
+        clearProps: 'opacity,transform,y'
+      });
+    }
+
     // GSAP Stage-Einblend-Animation
     if (typeof gsap !== 'undefined') {
       var children = target.querySelectorAll('.container > *, .ta-quiz, .ta-results, .ta-form-layout');
@@ -2686,7 +2694,7 @@ if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
       issues.push({ type: 'warning', title: 'Conversions APIs nur teilweise', text: 'Einige Plattformen erhalten keine Server-Events \u2014 Optimierung auf Basis unvollst\u00e4ndiger Daten.' });
     }
     if (a.consent && (a.consent.value === 'no-banner' || a.consent.value === 'basic-banner')) {
-      issues.push({ type: 'warning', title: 'Consent Mode v2 nicht aktiv', text: 'Ohne Consent Mode modelliert Google keine Conversions f\u00fcr Nutzer, die ablehnen.' });
+      issues.push({ type: 'warning', title: 'Consent Mode v2 nicht aktiv', text: 'Seit M\u00e4rz 2024 verpflichtend (DMA). Ohne CMv2: kein Remarketing, kein Conversion Tracking f\u00fcr EWR-Nutzer \u2014 Google Ads l\u00e4uft blind, CPAs steigen.' });
     }
     if (a.gtm && a.gtm.value === 'no') {
       issues.push({ type: 'warning', title: 'Kein Tag Manager', text: 'Ohne GTM ist strukturiertes, skalierbares Conversion-Tracking kaum realisierbar.' });
@@ -2805,25 +2813,26 @@ if (typeof ScrollTrigger !== 'undefined') { ScrollTrigger.refresh(); }
     });
   }
 
-  // --- Intro GSAP Animation ---
-  if (typeof gsap !== 'undefined') {
-    var introTl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.2 });
+  // Init
+  showQuestion(1);
+
+  // --- Intro GSAP Animation (deferred to window.load) ---
+  window.addEventListener('load', function() {
+    if (typeof gsap === 'undefined') return;
+    if (!document.getElementById('ta-funnel')) return;
+
+    var introTl = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.1 });
     introTl
       .from('.ta-intro__content .section-label', { y: -15, opacity: 0, duration: 0.4 })
       .from('.ta-intro__h1', { y: 40, opacity: 0, duration: 0.6 }, '-=0.2')
       .from('.ta-intro__lead', { y: 25, opacity: 0, duration: 0.5 }, '-=0.3')
-      .from('.terminal', { y: 25, opacity: 0, duration: 0.5 }, '-=0.3')
-      .from('#ta-start', { y: 20, opacity: 0, duration: 0.4 }, '-=0.2')
+      .from('.ta-intro .terminal', { y: 25, opacity: 0, duration: 0.5 }, '-=0.3')
       .from('.ta-features', { y: 15, opacity: 0, duration: 0.4 }, '-=0.2')
       .from('.ta-proof', { y: 15, opacity: 0, duration: 0.4 }, '-=0.2')
-      .from('.ta-intro__visual', { scale: 0.92, opacity: 0, duration: 0.6 }, '-=0.8');
+      .from('.ta-intro__visual', { scale: 0.92, opacity: 0, duration: 0.6 }, '-=0.6');
 
-    // Terminal lines type-effect Stagger
     gsap.from('.ta-terminal-line', {
       x: -20, opacity: 0, duration: 0.3, stagger: 0.12, ease: 'power2.out', delay: 0.7
     });
-  }
-
-  // Init
-  showQuestion(1);
+  });
 })();
